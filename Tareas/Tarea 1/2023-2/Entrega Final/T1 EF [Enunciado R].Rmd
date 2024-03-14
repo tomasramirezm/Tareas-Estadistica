@@ -1,0 +1,198 @@
+---
+title: Tarea 1, Entrega 4: Colas Pesadas e Información de Fisher
+output: html_document
+---
+
+### MA3402 Estadística
+
+**Profesor:** Joaquín Fontbona T.
+
+**Auxiliares:** Javier Maass, Francisco Muñoz y Diego Olguín.
+
+## Objetivo:
+El objetivo de esta tarea será hacerles conocer varias técnicas estadísticas con que se puede analizar el _comportamiento_ de una distribución de datos que, a priori, no tenemos la más mínima idea sobre cómo podría ser modelada (de forma "efectiva" por lo menos).
+
+```{r}
+# 1. Instalación de paquetes:
+install.packages("ggplot2")
+install.packages("EnvStats")
+```
+
+```{r}
+library(ggplot2)
+library(EnvStats)
+```
+
+## Gentil introducción a las _colas pesadas_
+
+En la vida, nos tocará enfrentar problemas en que nos darán una matriz con datos, y estaremos obligadxs a tratar de sacar la máxima información posible a partir de ellos. A lo largo del curso iremos experimentando con varias ideas que se usan mucho en la práctica; el objetivo de este notebook es intentar introducirles a la idea de _modelar un problema_ del que pueden no tener mucho conocimiento _a priori_.
+
+En particular, en este problema buscaremos decidir qué tipo de modelo probabilístico puede ser conveniente para modelar un fenómeno del mundo real: las distribuciones de Pareto vs. las Exponenciales. Estudiaremos también algunas de las propiedades de los estimadores de máxima verosimilitud (EMV) para este tipo de modelos.
+
+Recordemos cómo es la forma de las funciones de densidad de las v.a.s Pareto y las v.a.s exponenciales. Ambas son v.a.s que toman valores en los números positivos y que buscan describir _cómo decae la frecuencia de eventos que toman valores cada vez "más grandes"_. Son súper útiles para modelar cosas como el tamaño de ciudades (hay muchas ciudades con pocos habitantes y pocas con muchos habitantes), el GDP de un país (hay pocos países con alto GDP y muchos con GDP muy bajo) o la riqueza dentro de un país ("ta mal pelao el chancho" o, en términos estadísticos, muchos individuos tienen poco y muy pocos tienen mucho). Ahora, recordemos un poco cómo se describen estas v.a.s.
+
+Sabemos, por ejemplo, que las v.a.s de **Pareto** son tales que, para unos parámetros $\alpha>0$ y $c >0$, tienen funciones de densidad de la forma:  
+$$p_{\alpha, c}(x) ={\frac {\alpha c^{\alpha }}{x^{\alpha +1}}} 1_{x \geq c}$$
+(para más información, véase https://en.wikipedia.org/wiki/Pareto_distribution)
+Podemos notar que estas densidades tienen un decaimiento "polinomial", con lo que se dice que el modelo es de "colas pesadas" (veremos una ilustración de esto más adelante).
+
+Por su parte, las v.a.s **Exponenciales** dependen de un parámetro $\alpha >0$, y tienen densidades de la forma: $$q_\alpha(x) = \alpha e^{-\alpha x} 1_{x \geq 0}$$
+(véase https://en.wikipedia.org/wiki/Exponential_distribution para más información).
+Este tipo de modelo tiene "colas ligeras", en tanto su densidad decae exponencialmente (y por ende, más rápido que cualquier polinomio).
+
+Ahora, para comparar "de igual a igual" los modelos de Pareto (colas pesadas) y los Exponenciales (colas ligeras), definiremos un nuevo tipo de v.a. que consiste en una **Exponencial shifteada**, de modo que su soporte está, para $c>0$, en $[c, +\infty]$ (en vez de $[0, +\infty]$ como es usual). Esto será esencialmente lo que corresponde a una v.a. $X = Y + c$, con $Y\sim Exp(\alpha)$. La densidad para una tal v.a. se escribe como (para $\alpha>0$ y $c >0$):
+$$q_{\alpha, c}(x) = \alpha e^{-\alpha (x-c)} 1_{x \geq c}$$
+Este será el modelo de "colas ligeras" que podremos comparar "sin problemas" a las v.a.s de Pareto.
+
+Incluimos el siguiente código para calcular la _densidad_ de las v.a.s que estudiaremos:
+
+```{r}
+pareto <- function(a, c, x){
+    return ((x>=c)*((a*(c^a))/(x**(a+1))))
+}
+
+exp.shift <- function(a, c, x){
+  return ((x>=c)*a*exp(-a*(x-c)))
+}
+```
+
+**1.-** Grafique las densidades $p_{\alpha, c}$ y $q_{\alpha, c}$ para valores de los parámetros $\alpha >0$ y $c>0$ de su elección (pero usando los mismos valores de $\alpha$ y $c$ para ambas familias de densidades). Grafique estas mismas densidades en una escala log-log (i.e. log en el eje x y log en el eje y; considere las funciones $\texttt{scale\_x\_log10}$ y $\texttt{scale\_y\_log10}$ de ggplot). Comente lo que se observa con respecto a las _colas_ de las distribuciones.
+
+```{r}
+# Respuesta: Aquí !!
+```
+
+Con esto, podemos ver que la idea de las colas _livianas_ o _pesadas_ se puede ver en las funciones de densidad. Sin embargo (y lo que será de mayor interés) será observar este fenómeno directamente a partir de las _muestras_ de la v.a. (en la práctica nos llegarán _datos_ y vamos a querer entender si tienen (o no) colas _pesadas_).
+
+Por ejemplo, podemos samplear aleatoriamente de alguna de nuestras distribuciones, y ver _qué rangos de valores se obtienen_ (si los valores llegan a ser muy altos, uno tendería a pensar en un fenómeno de _colas pesadas_).
+
+Por otro lado, a partir de nuestros datos (o muestras) podemos tratar de armar una _función de densidad acumulada_. Es decir, dada una muestra $ x_1, \ldots, x_n $, podemos calcular la _densidad acumulada empírica_ como:
+
+$$
+\hat G(x) = \frac{1}{n} \sum_{i=1}^n \mathbb 1\{x_i > x\}
+$$
+
+Esta función mide cuántas muestras se encontraron (en promedio) por sobre cada valor de x (de alguna forma, midiendo el "peso de la cola" de la distribución). En particular, nos será muy útil para identificar el tipo de _cola_ que tiene un cierto conjunto de datos.
+
+**2.-** Fije unos parámetros $c$ y $\alpha$ de su agrado, y samplee aleatoriamente $N = 1000$ muestras de v.a.s **pareto** ($p_{\alpha, c}$) y **exponenciales** **shifteadas** ($q_{\alpha, c}$) (usando los parámetros $c>0$ y $\alpha>0$ seleccionados; le puede ser útil la función $\texttt{rpareto}$ del módulo _EnvStats_).
+
+Grafique el histograma asociado a cada uno de los modelos de los que se sampleó, incluyendo la función de densidad a partir de la cual estos datos fueron simulados.
+
+Grafique, utilizando la función $\texttt{muestras}$, los valores particulares que se obtuvo en las simulaciones (esto le permitirá ver el _rango_ de valores alcanzados por las muestras de cada modelo).
+
+Calcule la función de _densidad acumulada empírica_ para esta muestra aleatoria de datos y grafique sus valores en escala log-log (use para ello la función $\texttt{empirical\_ccdf}$ dada más abajo).
+
+En base a lo que puede observar de estos gráficos, ¿cómo se le ocurriría utilizar estas técnicas para decidir, en base a evidencia empírica, el tipo de modelo estadístico a utilizar para modelar el comportamiento de sus datos?
+
+```{r}
+eccdf <- function(x, data) {
+  mean(data > x)
+}
+# OJO esta función no recibe un dataframe, sino derechamente la lista de datos 
+#(e.g. si tengo mis muestras de una v.a. en un data.frame df, en la columna "muestras", debo pasarle df$muestras o df[, "muestras"])
+# El parámetro line agrega (o no) una línea de tendencia a su gráfico
+empirical_ccdf <- function(data, line= FALSE) {
+  x <- sort(data)
+  y <- sapply(x, eccdf, data = data)
+  df <- data.frame(x = x, y = y)
+  pp <- ggplot(df, aes(x = x, y = y)) + 
+    geom_point(alpha = 0.5) +
+    scale_x_log10() +
+    scale_y_log10() +
+    labs(x = "Log Value", y = "Log Prob.")
+if(line){
+    return(pp + 
+  geom_smooth(method='lm', formula= y~x, colour = "blue"))
+}
+else{
+    return(pp)
+}
+}
+
+# Esta función recibe el df donde tienen guardados sus datos y la columna de interés
+muestras <- function(df, col, y_min = 0, y_max = 80){
+    L= length(df[,col])
+    pp <-ggplot(df, aes(x = 1:L, y = !!sym(col))) + 
+    geom_point(alpha = 0.5) +
+    geom_linerange(aes(ymin = 0, ymax = !!sym(col)), color = "blue", alpha = 0.5) +
+    labs(x = "Indice", y = "Valor", title= "Valores de las muestras aleatorias") +
+    ylim(y_min, y_max)
+    return(pp);
+}
+```
+
+```{r}
+# Respuesta: Soy yo !
+```
+
+## Pongámoslo en Práctica !1!!
+
+Adjunto a esta tarea vienen varios .csv con datos del mundo real, correspondientes a diferentes fenómenos de alto interés:
+- Firmas_Grandes.csv contiene los datos del tamaño de las 500 empresas más grandes del planeta, según su valor de mercado (columna $\texttt{Market.Value}$). Nos interesará entender cómo distribuye el valor de mercado entre las diferentes firmas.
+- GDP.csv contiene la información del PIB (y el PIB per cápita) para los distintos países del planeta. Nos interesará entender cómo distribuye el PIB per cápita (columna $\texttt{GDP.per.capita}$) entre los diferentes países.
+- CiudadesUS.csv contiene varios datos interesantes sobre las ciudades más importantes de EEUU. Nos interesará, por ejemplo, entender cómo distribuye el tamaño de la población entre las diferentes ciudades (columna $\texttt{pop2023}$ para el año 2023).
+
+**3.-** Lean estos diferentes conjuntos de datos usando R. Observen, con el comando $\texttt{head}$, cómo están estructurados más o menos los datasets.
+
+Grafiquen el histograma de estas muestras así como la _función de densidad acumulada empírica_ para cada uno. 
+
+En base a la discusión anterior, ¿qué tipo de modelo privilegiaría en cada uno de estos _datasets_? Decida qué modelo estadístico utilizará para intentar _aproximar_ el comportamiento de cada uno de los diferentes conjuntos de datos.
+
+```{r}
+# Respuesta: Soy el ChatGDP!
+```
+
+Supongamos, a partir de ahora, que $c$ es un valor fijo y conocido para los modelos estadísticos que consideramos (SPG, puede tomarlo como $c = \min_{i =1, \dots, N} x_i$ para $x_i$ los datos de la muestra). Con esto, nos quedan modelos estadísticos que dependen únicamente del parámetro $\alpha$.
+
+**4.-** Calcule una expresión para el EMV del parámetro alpha tanto para el modelo _Pareto_ como el _Exponencial shifteado_.
+
+**Respuesta:** Soy yo !
+
+**5.-** Determine, para cada modelo, si el EMV es _insesgado_ (o no) y _consistente_ (o no). 
+
+**Respuesta:** Soy yo !
+
+**6.-** Calcule esta cantidad para cada modelo, en cada uno de los datasets considerados. Grafique la curva asociada a este parámetro "óptimo" junto al histograma de los datos: ¿Qué observa? ¿Qué modelo le parece más fidedigno de lo que ocurre en la realidad en cada caso? ¿Se condice con lo que esperaba?
+
+Observe si el valor del EMV calculado según la fórmula anterior coincide con lo que se obtiene de optimizar la log-verosimilitud utilizando el método optim de R.
+
+```{r}
+# Respuesta: El Matus
+```
+
+**7.-** Calcule la información de Fisher para el parámetro $\alpha$ (denotada $I(\alpha)$) en ambos modelos.
+
+**Respuesta:** Aquí !
+
+**8.-** Elija para cada conjunto de datos, el modelo estadístico que le parezca "mejor" para modelar el comportamiento de las v.a.s. 
+
+Estime la información de Fisher numéricamente para el parámetro $\alpha$ en ese conjunto de datos (_Hint: podría usar, por ejemplo, un estimador de $\alpha$_). 
+
+Determine (numéricamente) la cota de Cramer-Rao asociada a una muestra de $n$ datos. ¿Qué puede decir al respecto?
+
+```{r}
+# Respuesta: El ChatGDP
+```
+
+Para simplificar el resto de la tarea, considere únicamente UNO de los conjuntos de datos trabajados anteriormente.
+
+**9.-** Buscaremos simular la v.a. dada por el EMV (buscando entender cómo es su "distribución"). 
+
+Para ello, samplearemos $n=1000$ muestras al azar del dataset (elegiremos $n$ filas del dataset al azar) y las usaremos para calcular el EMV (con ese subconjunto aleatorio de $n$ datos). 
+
+Repetiremos este proceso $N=1000$ veces, para obtener $N$ _realizaciones "independientes"_ de la v.a. $\alpha^{MV}_n$ (como posiblemente habrá filas que "se repitan" al volver a samplear, las cosas no son realmente independientes, pero ignoremos eso por ahora). 
+
+Estudie (a partir de las $N$ muestras) la distribución de esta v.a. $\alpha^{MV}_n$ ¿Cuál es su media? ¿Y su varianza? ¿Cómo se compara esta última con la cota de Cramer-Rao que calculó antes?
+
+Finalmente, grafique el histograma de las muestras de la v.a. $\alpha^{MV}_n$ y sobreponga la función de densidad de una gaussiana centrada en $\alpha$ (el "valor real" del parámetro, que en realidad desconocemos, pero que ya estimamos aproximadamente) y de varianza $\mathrm{Var}(\alpha^{MV}_n)$. Sobreponga también otra gaussiana centrada en el "valor real" $\alpha$, pero cuya varianza sea $I(\alpha)^{-1}$ (el inverso de la información de Fisher). ¿Qué puede comentar al respecto?
+
+_Indicación: Si no está conforme con sus resultados, juege con los valores de $n$ y $N$ para intentar entender mejor lo que está pasando. También, recuerde los conceptos de normalidad asintótica y eficiencia asintótica_.
+
+```{r}
+# Respuesta: A lo malditein !
+```
+
+**10.-** ¿Podemos hablar de eficiencia si consideramos un modelo en que se _mezclen_ las Pareto con las Exponenciales? ¿Sería _regular_ un tal modelo?
+
+**Respuesta:** La última !
+

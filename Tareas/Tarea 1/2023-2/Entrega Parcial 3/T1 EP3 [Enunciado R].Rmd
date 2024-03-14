@@ -1,0 +1,146 @@
+---
+title: Tarea 1, Entrega 3: Estimando con máxima verosimilitud.
+output: html_document
+---
+
+### MA3402 Estadística
+
+**Profesor:** Joaquín Fontbona T.
+
+**Auxiliares:** Javier Maass, Francisco Muñoz y Diego Olguín.
+
+## Unos escarabajitos
+
+Para un estudio de un nuevo pesticida en la industria agrícola, se decidió probar la toxicidad de la sustancia química, exponiendo a escarabajos a diferentes concentraciones de la sustancia. Los datos asociados a estos experimentos vienen dados en el archivo $\texttt{datos\_pesticida.csv}$.
+
+Este archivo contiene una tabla, donde la variable $\texttt{nExpuestos}$ es el número de escarabajos expuestos a la concentración correspondiente de pesticida y  $\texttt{nMuertos}$ es el número de escarabajos que efectivamente murieron bajo dicha concentración.
+
+Nos interesará generar un modelo probabilístico con el que podamos estudiar la _efectividad_ de nuestro pesticida, es decir, qué tan probable es que se mate a la plaga dada una cierta concentración de la sustancia. 
+
+Más específicamente, sea $Y$ la variable aleatoria binaria que vale $Y=1$ si un escarabajo muere bajo la concentración $x$ de sustancia, y vale $Y=0$ si no es así. Definimos $\pi(x) = \mathbb{P}(Y=1 | x)$, y nos interesará _estimar_ la forma de esta función, considerando los datos obtenidos de los experimentos.
+
+**1.-** Lea el archivo $\texttt{datos\_pesticida.csv}$ y genere una columna llamada $\texttt{efectividad}$, en que se guarde, para cada valor de la concentración, qué tan efectivo fue el pesticida (i.e. cuántos escarabajos murieron del total que fue expuesto). Grafique la _efectividad_ en función de la _concentración_ de la sustancia (le podrá ser útil la función de ploteo definida aquí abajo).
+
+```{r}
+# Instalémos ggplot2 en caso de que no la tengamos
+if(!(require(ggplot2))){install.packages('ggplot2')}
+library(ggplot2) 
+```
+
+```{r}
+lineas <- function(df, colx, coly){
+    pp <- ggplot(data=df, aes(x=!!sym(colx), y=!!sym(coly))) +
+    geom_line() +
+    geom_point() + 
+    labs(
+        title='Efectividad (empírica) de la sustancia en función de la concentración',
+        x = "Concentración",
+        y = "Efectividad"
+    )
+    return(pp);
+}
+```
+
+```{r}
+# Respuesta Aquí !
+```
+
+Note que este gráfico pareciera tener una forma de "S" (algo así como una sigmoide); por lo que tiene sentido pensar que hay un modelo _subyacente_ que nos podría permitir entender la relación entre la concentración y la _efectividad_ de forma "continua".
+
+En particular, utilizaremos tres modelos diferentes para estimar la influencia de la toxicidad en la probabilidad de que un escarabajo se muera bajo una determinada concentración $x$ de sustancia:
+
+- La probabilidad depende de la concentración a través de una función logística (de parámetros $\alpha_1, \beta_1$ por determinar):
+
+$$\tilde{\pi}(x) = \frac{\exp(\alpha_1 + \beta_1 x)}{1 + \exp(\alpha_1 + \beta_1 x)}$$
+
+- La probabilidad depende de $x$ a través de la función _probit_ (con parámetros $\alpha_2, \beta_2$ por determinar). Es decir, si $\phi$ es la función de **distribución** de una normal estándar (i.e. la integral de la densidad de la normal estándar), consideramos:
+$$\hat{\pi}(x) = \phi(\alpha_2 + \beta_2 x)$$
+
+- La probabilidad depende de $x$ a través de la función log-log complementaria (con parámetros $\alpha_3, \beta_3$ por determinar):
+
+$$\bar{\pi}(x) = 1 - \exp(-\exp(\alpha_3 + \beta_3 x))$$
+
+Para su comodidad, aquí definimos las funciones que intervendrán en este ejercicio:
+
+```{r}
+logistic <- function(alfa1, beta1, x){
+  exp(alfa1 + beta1*x) / (1 + exp(alfa1 + beta1*x))  
+}
+
+probit <- function(alfa2, beta2, x){
+  Vectorize(pnorm)(alfa2 + beta2*x,0,1)  
+}
+
+loglog <- function(alfa3, beta3, x){
+  1 - exp(-exp(alfa3 + beta3*x))  
+}
+```
+
+**2.-** Sin realizar ningún cálculo, escoja algunos valores de $\alpha_i$ y $\beta_i$ (para $i = 1, 2,3$) arbitrariamente. Grafique, en una misma figura, las funciones $\bar{\pi}, \tilde{\pi}, \hat{\pi}$ y la curva de _efectividad vs. concentración_ de antes. Intente que su elección de valores para $\alpha_i$ y $\beta_i$ sea tal que todas las curvas "se parezcan".
+
+_Hint: Averigüe sobre la función $\texttt{geom\_function}$ de ggplot_
+
+```{r}
+# Respuesta: WIII
+```
+
+**3.-** Recuerde la definición de _verosimilitud_ de un parámetro dada una muestra aleatoria.
+
+**Respuesta:**
+Aquí !
+
+Sólo para clarificar, en nuestro caso, la tabla trae _varios experimentos agrupados_ según el nivel de concentración. Para cada valor de la concentración, se realizaron $\texttt{nExpuestos}$ experimentos, de los cuales $\texttt{nMuertos}$ corresponden a aquellos en que la v.a. vale $Y=1$ (i.e. el escarabajo murió). 
+
+**4.-** Escriba la forma _general_ de la verosimilitud y log-verosimilitud para este problema de _clasificación binaria_. Para cada uno de los modelos propuestos, genere una función de R que calcule la log-verosimilitud de un modelo a partir de los datos contenidos en el archivo.
+
+**Respuesta:**
+
+```{r}
+# Aquí !
+```
+
+**5.-** Genere una visualización en 3D de las funciones de log-verosimilitud que queremos optimizar. 
+_Hint: Para ello, utilice la librería $\texttt{rgl}$ y su función $\texttt{plot3d}$ (o si prefiere, plotly o alguna otra librería de visualización en R de más alto nivel)._
+
+```{r}
+install.packages("rgl")
+library(rgl)
+```
+
+```{r}
+# Respuesta Acá
+```
+
+**6.-** Encuentre los estimadores de Máxima Verosimilitud para los parámetros $(\alpha_i, \beta_i)$ con $i = 1, 2, 3$ utilizando una función de optimización genérica de R (por ejemplo, la función $\texttt{optim}$). Repita el gráfico de la pregunta **2.-** pero ahora empleando los valores _óptimos_ de los parámetros. ¿Qué puede decir al respecto?
+
+```{r}
+# Respuesta
+```
+
+**7.-** Considere ahora el método de los _momentos_. Asuma que es suficiente considerar, para un valor de $x$ fijo, la esperanza de $Y$ dado ese valor de $x$ para encontrar unos "buenos" parámetros a través del método de los momentos. Elija alguno de los 3 modelos a su gusto y estime un valor pertinente de los parámetros utilizando este "método de los momentos". Compare los resultados obtenidos con respecto al EMV ¿Cuál preferiría usar?.
+
+_Hint: Considere, para un par de $x$ fijos bien elegidos, el valor de la esperanza, y con ello estime los parámetros_
+
+```{r}
+# Respuesta
+```
+
+Toda la idea detrás de _estimar_ el parámetro que permita _explicar el comportamiento observado_ de la mejor manera posible, es que ahora disponemos de un modelo _probabilístico_ que podemos estudiar, y del cual podemos _samplear_ nuevos datos sin problemas
+**8.-** Elija alguno de los parámetros _óptimos_ obtenidos en alguna de las preguntas anteriores (el que le parezca mejor) y en esta pregunta buscaremos _samplear_ "nuevas muestras" para interpolar nuestra curva de efectividad vs. concentración a nuevos valores de concentraciones. Para ello:
+
+- Samplee $n=100$ uniformes entre 1.7 y 1.9 que representarán la concentración de la sustancia. Estas las llamaremos $\{x_k\}_{k=1}^{100}$. Para cada una de ellas, calcule $\pi_{\theta^*}(x_k) = \mathbb{P}(Y=1|x_k)$ utilizando su modelo preferido (con el parámetro _óptimo_ $\theta^* = (\alpha^{*}_i, \beta^{*}_i)$ que decidió al inicio de la pregunta). Estos serán los "nuevos puntos" en los que podremos entender el comportamiento de nuestro pesticida.
+
+- Para cada uno de estos "nuevos puntos", samplee una bernoulli de parámetro $\pi_{\theta^*}(x_k)$ (esta corresponde a la v.a. $Y$ que determina si un escarabajo vive o no). Con esto hemos _simulado_ un nuevo experimento, asumiendo que nuestro modelo es correcto.
+
+- Guarde en un data.frame los valores de las "nuevas concentraciones", así como de los $\texttt{nExpuestos}$, $\texttt{nMuertos}$ y $\texttt{efectividad}$ que obtuvo en los _experimentos simulados_.
+
+- Grafique la nueva curva de "efectividad según la concentración" para los experimentos simulados. En ese mismo gráfico incluya las curvas correspondientes a $\pi_\theta(x)$ para los otros modelos (i.e. los que NO eligió para _simular_ los experimentos), así como la curva de efectividad vs. concentración original. Comente sus resultados.
+
+```{r}
+# Respuesta !
+```
+
+**9.-** Hemos visto que los 3 modelos permiten _explicar_ relativamente bien las observaciones ¿Cuál podría ser una buena estrategia para determinar cuál de los tres modelos se ajusta mejor a las observaciones realizadas? ¿Con cuál se quedarían ustedes?
+
+**Respuesta:**
+Soy yo !
