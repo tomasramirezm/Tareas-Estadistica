@@ -1,0 +1,147 @@
+---
+title: Test de hipótesis
+output: html_document
+---
+
+### MA3402 Estadística
+## Tarea 2, Entrega 2: Test de hipótesis.
+
+**Profesor:** Joaquín Fontbona T.
+**Auxiliares:** Javier Maass, Francisco Muñoz y Diego Olguín.
+
+### Partamos por el principio
+
+Los test de hipótesis estadísticos se basan en una declaración llamada hipótesis nula que asume que no está ocurriendo nada interesante entre las variables que estamos probando. La forma exacta de la hipótesis nula varía de un tipo de prueba a otro: si estás probando si los grupos son diferentes, la hipótesis nula afirma que los grupos son iguales. Por ejemplo, si quisieras probar si la edad promedio de los votantes en tu estado de origen difiere de la edad promedio nacional, la hipótesis nula sería que no hay diferencia entre las edades promedio.
+
+El propósito de un test de hipótesis es determinar si la hipótesis nula es probable que sea verdadera dado ciertos datos de muestra. Si hay poca evidencia en contra de la hipótesis nula dada la información, aceptas la hipótesis nula. Si la hipótesis nula es improbable dada la información, podrías rechazar la hipótesis nula a favor de la hipótesis alternativa: que está ocurriendo algo interesante. La forma exacta de la hipótesis alternativa dependerá de la prueba específica que estés llevando a cabo. Siguiendo con el ejemplo anterior, la hipótesis alternativa sería que la edad promedio de los votantes en tu estado realmente difiere de la edad promedio nacional.
+
+Una vez que se tienen la hipótesis nula y la hipótesis alternativa, se debe elegir un nivel de significancia (a menudo denotado por $\alpha$). El nivel de significancia es un umbral de probabilidad que determina cuándo rechazar la hipótesis nula. Después de realizar un test, si la probabilidad de obtener un resultado tan extremo como el que observas debido al azar es menor que el nivel de significancia, rechazas la hipótesis nula a favor de la hipótesis alternativa. Esta probabilidad de ver un resultado tan extremo o más extremo que el observado se conoce como el *p value*.
+
+El tipo de test en el que centraremos esta tarea será el test de *t*, que es utilizado para determinar si una muestra de datos numéricos difiere significativamente de la población o si dos muestras difieren entre sí.
+
+### Datos a utilizar
+
+Trabajaremos simulando datos para votantes de Estados Unidos. En la siguiente celda se crean algunos datos ficticios de edades para la población de votantes en todo el Estados Unidos y una muestra de votantes en Minnesota, y probemos si la edad promedio de los votantes de Minnesota difiere de la población.
+
+```{r}
+set.seed(12) # Para temas de replicabilidad, fijaremos una semilla
+
+# Datos simulados para diferentes grupo etarios
+population_ages <- c(
+    rexp(1000000,0.015)+18,
+    rpois(500000,20)+18,
+    rpois(500000,32.5)+18,
+    rpois(500000,45)+18
+)
+
+# Mantendremos a la población menor a 100 años
+population_ages <- ifelse(
+    population_ages<100, population_ages, 
+    population_ages%%100+18
+)
+
+
+true_mean <- mean(population_ages)  # Guardaremos la media real
+print("Media real de toda la población:")
+true_mean 
+
+# Sampleamos ahora datos de Minnesota, que es similar a la de toda la población, pero no igual
+minnesota_ages <- c(
+    rexp(100,0.0085)+18,      
+    rpois(50,15)+18,
+    rpois(50,25)+18,
+    rpois(50,35)+18
+)
+
+minnesota_ages <- ifelse(
+    minnesota_ages<100, minnesota_ages, 
+    minnesota_ages%%100+18
+)
+
+print("Media para Minnesota")
+mean(minnesota_ages)
+```
+
+### *t-test* de una sola muestra bilateral
+
+Note que utilizamos una combinación ligeramente diferente de distribuciones para generar los datos de muestra para Minnesota, por lo que sabemos que las dos medias son diferentes. Realizaremos un *t test* de nivel 95% para ver si rechaza correctamente el hecho de que la muestra proviene de la misma distribución que la población. 
+
+Diremos que un test es bilateral si busca probar que dos medias son diferentes (se puede aplicar a otros parámetros, pero nos quedaremos con la media para esta tarea) y se plantea como sigue:
+
+$$H_0: \mu = \mu_0 \text{ } \text{ } \text{v/s} \text{ } \text{ } H_1: \mu \neq \mu_0$$
+
+Donde $H_0$ es la hipótesis nula y $H_1$ es la hipótesis alternativa.
+
+**1.1 En base a lo anterior, ¿Cúal sería la hipótesis nula y cúal sería la hipótesis alternativa para el problema que busca resolver?**
+
+**Solución:**
+
+**1.2 Utilice la función t.test() nativa de R para hacer un *test* bilateral.**
+
+*Indicación: Con bilateral nos referimos a un test two sided. Puede buscar el uso de la función t.test en la documentación de R. Tomaremos a la media real (o mu para utilizar en la función t.test) como la true_mean que se definió más arriba.*
+
+```{r}
+# Solución
+```
+
+*Nota: la hipótesis alternativa puede ser que la media de la muestra sea estrictamente menor, estrictamente mayor o no igual al parámetro de la población. Para la hipótesis "no igual a", utilizamos una prueba "bilateral" porque un resultado de prueba extremo en cualquier dirección sería evidencia de que la media de la muestra difiere significativamente de la media de la población.*
+
+**1.3 El test de t, se hace en base a calcular un estádistico basado en una t-student. De la parte anterior notará que aparecen tres cantidades que serán relevantes:**
+
+* t: Es el estadístico de interés.
+* df: Grados de libertad estimados para la t-student.
+* p-value: Probabilidad de observar los resultados del estudio, y otros más alejados de la hipótesis nula, si la hipótesis nula fuera cierta. 
+
+
+**Diremos que se rechazará la hipótesis nula en un test bilateral de nivel $(1-\alpha)100$% si alguna de las siguientes ocurre:**
+
+1. El valor t encontrado antes no está entre el percentil $\alpha/2$ y $1-\alpha/2$ de una t-student de df (cantidad encontrada antes) grados de libertad.
+2. p-value < $\alpha$.
+
+**Verifique ambas condiciones y concluya que se puede rechazar la hipótesis nula en el anterior test.**
+
+*Nota 1: Se puede probar que en realidad ambas condiciones son equivalentes, pero no utilizaremos eso en esta tarea.*
+*Nota 2: Para obtener los cuantiles de una t-student puede utilizar la función pt nativa de R.*
+*Nota 3: Cuando no se rechaza la hipótesis nula, ¡no significa que se acepte! En ese caso simplemente decimos que no rechazamos la hipótesis nula.*
+
+```{r}
+# Solución
+```
+
+**1.4 Repita todo lo anterior pero ahora cambiando el nivel del test a 99%. Es decir, realice el test de hipótesis y corrobore ambas condiciones descritas antes para decidir si rechazar o no la hipótesis nula. Comente que es lo que ocurre en este caso.**
+
+```{r}
+# Solución
+```
+
+### 2. Aplicación a estimación de un parámetro vía redes neuronales
+
+*Disclaimer inicial: usted no debe saber nada de redes neuronales para este inciso, es solo a manera de mostrar una aplicación a un tema atingente hoy en día. Ahora sigue mucho texto, pero notará al final que es repetir lo de la parte anterior.*
+
+Usted trabaja para una cierta investigación en donde buscan estimar una cierta densidad de probabilidad en $[0,1]$ mediante una red neuronal simple y es de altísimo interés el valor de $f(0.5)$, el valor de la densidad de probabilidad evaluada en $0.5$. Supondremos que la densidad de probabilidad buscada es continua y que no tenemos datos observados para la densidad de probabilidad en dicho punto, por tanto la red debe "adivinar" el valor de $f(0.5)$ en base a los datos dados para su entrenamiento.
+
+Lo único relevante para esta parte es que por parte del equipo se tiene la creencia de que $f(0.5) = 0.5$. Para poder darle rigurosidad, se plantea hacer un test de hipótesis. Esto no es relevante para esta tarea, pero durante los últimos años se le ha dado rigurosidad matemática la idea que sigue (por ejemplo en *Yarin Gal, Zoubin Ghahramani, Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning*).
+
+Sean $y_1, \dots, y_n$ las estimaciones de la red neuronal en $x=0.5$ en las últimas $n$ iteraciones de su entrenamiento. Entonces se tiene que si la cantidad de iteraciones previas es suficientemente grande, entonces 
+
+$$ \bar y \sim N(f(0.5), \sigma^2) $$
+
+con $\sigma^2$ desconocido, pero no es relevante, lo de interés es que entonces las últimas iteraciones de entrenamiento, en promedio, deberían dar lo que se busca estimar. Es similar a decir que en las últimas iteraciones de entrenamiento la red neuronal oscila entorno al valor que busca aproximar.
+
+**2.1 Plantee el test de hipótesis que busca probar que la estimación de la red neuronal para $f(0.5)$ es $0.5$. Es decir, declare cúales son la hipótesis nula y la hipótesis alternativa.**
+
+*Indicación: vuelva a leer el planteamiento de los test de hipótesis para ver cúal debe ser la hipótesis nula y cúal debe ser la alternativa.*
+
+**Solución:**
+
+**2.2 Usted tiene las últimas 30 iteraciones de una red neuronal entrenada lo suficiente de manera previa (de forma que valga lo antes descrito). Repita el mismo procedimiento de la sección anterior para determinar si puede rechazar o no la hipótesis nula.**
+
+```{r}
+data <- read.csv("last_epochs.csv")
+last_iterations <- data$x
+```
+
+```{r}
+# Solución
+```
+

@@ -1,0 +1,122 @@
+---
+title: An R Markdown document converted from "Tarea2_entrega3_enunciado.ipynb"
+output: html_document
+---
+
+### MA3402 Estadística
+## Tarea 2, Entrega 3: Test de Chi cuadrado y ANOVA.
+
+**Profesor:** Joaquín Fontbona T.
+**Auxiliares:** Javier Maass, Francisco Muñoz y Diego Olguín.
+
+```{python}
+if(!require(ggplot2)){
+    install.packages("ggplot2")
+}
+
+library(ggplot2)
+```
+
+El objetivo de esta tarea es poder introducir otros tests de hipótesis o ver ciertos problemas como test de hipótesis con una lógica muy similar a lo visto en la tarea anterior.
+
+### **1. Test de Chi cuadrado (Goodness of Fit)**
+
+El test de Chi cuadrado busca cuantificar que tan bien una distribución se ajusta a otra. En general se tiene una distribución que se ajustó antes y permite hacer predicciones y otra de referencia que es la observada y en general viene dada por datos. 
+
+Tal como el t-test se basaba en un estadístico proveniente de una distribución t-student, este se basa en un estadístico proveniente de una $\chi^2$, de ahí el nombre del test. Este estadístico se calcula como
+
+$$ \chi^2 = \sum \frac{(observado - esperado)^2}{esperado} $$
+
+Entonces esto se plantea como un test de hipótesis como sigue
+
+$$H_0: \text{Lo observado coincide con lo esperado} \, \text{  } \, \text{  v/s  }  \text{  } \, H_1: \text{Lo observado NO coincide con lo esperado} $$
+
+Aplicaremos esto para poder estimar si un subconjunto de la población sigue las mismas proporciones que todo el país en cuanto a contagios de una determinada enfermedad.
+
+### Qué contagioso...
+
+**1.1 Usted posee datos de contagios por edad tanto para un país entero como para una ciudad que corresponde al 10% de todos los contagios del país, aproximadamente. Lea el archivo 'cases.csv', el que contiene los datos separados por edad para todo el país, para la ciudad y además los ratios nacionales, es decir, que porcentaje de los contagios nacionales representa ese grupo etario. Con la función 'chisq.test' utilice los datos de la ciudad como observados y los ratios para plantear un test de $\chi^2$.**
+
+```{python}
+# Solución
+```
+
+**1.2 Por el contrario del estadístico t asociado al t-test, la $\chi^2$ no es simétrica, por lo que los criterios para rechazar o no la hipótesis nula cambian un poco. Sea $X\sim \chi^2_{n-1}$, con $n$ la cantidad de rangos etarios considerados, entonces la hipótesis nula se rechaza si $1-P(X \leq \chi^2) = P(X > \chi^2) < \alpha $, es decir, si el estadístico de interés se ubica más allá del percentil $1-\alpha$. Al valor $P(X > \chi^2)$ se le denota el p-value para el test de chi-cuadrado. En base a lo hecho antes, ¿se rechaza o no la hipótesis nula para $\alpha=0.05$? Calcule el valor del percentil $1-\alpha$ para el valor dado antes y corrobore si su respuesta anterior es correcta o no.**
+
+*Nota: le puede ser de utilidad la función qchisq nativa de R.*
+
+```{python}
+# Solución
+```
+
+### 2. ANOVA de un solo factor
+
+ANOVA es una abrevación para Analysis of Variance. Lo que busca es poder comparar las medias de distintas poblaciones, cuyas observaciones suponemos de la siguiente forma
+
+$$Y_{ij} = \mu_i + \tau_i + \varepsilon_{ij} $$
+
+Donde $\mu_i$ es la media real de la población $i$, $\tau_i$ es el ruido intrínseco de medir la media para la población $i$ y $\varepsilon_{ij}$ es el ruido intrínseco de cada medición. Entonces, si tenemos $N$ poblaciones con medias $\mu_1, ..., \mu_N$ ANOVA se emplea en la búsqueda de anomalías en alguna de las poblaciones, por tanto se busca descartar que todas las medias sean iguales. Es decir, ANOVA se puede plantear como un test de hipótesis como sigue 
+
+$$H_0: \mu_1 = \mu_2 = ... = \mu_N \, \text{  } \, \text{  v/s  }  \text{  } \, H_1: \exists i,j:\, \mu_i \neq \mu_j $$
+
+Decimos que $\mu_i$ es el factor que afecta directamente a las poblaciones y en esta tarea solo nos pondremos en el caso en que las poblaciones se ven afectadas por un solo factor (de ahí el nombre), hay versiones para más factores pero no lo abordaremos ahora. Al principio puede parecer un poco extraña la formulación, así como en qué contextos podría ser interesante hacer esto; trataremos de aplicar este test en una situación práctica en que ANOVA es de enorme utilidad: las farmacias.
+
+### Hablemos de sustancias
+
+Una farmacéutica es encargada de crear una droga que induce el sueño y es utilizada para calmar la ansiedad. Esta farmacéutica tiene 10 centros de producción de esta droga, los cuáles abastecen distintas farmacias de la ciudad, recibiendo cada farmacia un lote de uno solo de los centros de producción y no existe otro competidor que produzca el mismo principio activo. 
+
+Ocurre que desde hace un tiempo muchos pacientes de un mismo sector vienen reportando que este medicamento ya no les está haciendo el mismo efecto. Esto provoca severos efectos a nivel de ese sector, como una mayor demanda del fármaco. Dado que este medicamento se vende únicamente con orden médica retenida, esto además provoca una saturación de horas médicas en el sector de neurología y trastornos del sueño.
+
+Frente a una posible multa por parte de las autoridades contra la farmacéutica, se le solicita a usted, el encargado de estadística y revisión de lotes de la empresa, que entregue un análisis de lo ocurrido. Es por ello que tiene a su disposición 100 registros de la cantidad de droga medida en los 10 lotes producidos en cada uno de los centros de producción. 
+
+**2.1 Lea el archivo 'lotes.csv' y grafique en forma de *boxplot* los datos para ver las medias de los diferentes lotes, en conjunto con sus quantiles. Simplemente viendo el gráfico, ¿observa que hay un lote anómalo o cuya media es significativamente mayor o menor?**
+
+```{python}
+# Este código ya hace el boxplot, está comentado para no dar error
+# Si a su DataFrame le coloca df (leído desde el archivo), entonces este debe funcionar
+# de lo contrario cambie df por el nombre de su DataFrame 
+
+#ggplot(data = df, aes(x = lotes_n, y = dosis, color = lotes_n)) +
+#    geom_boxplot() 
+```
+
+```{python}
+# Solución
+```
+
+**2.2 Con la función 'aov' nativa de R, realice un ANOVA que vea la relación entre la dosis de la droga (variable cuantitativa) y los lotes (variable categórica, es decir, que sea un string por ejemplo y no un real).**
+
+*Importante: En R para dar una fórmula entre una variable categórica es importante hacer cuantitativa ~ categórica, en el orden inverso R tira un error. Le puede ser útil buscar la documentación de la función aov.*
+
+```{python}
+# Solución
+```
+
+**2.3 Puede obtener gráficos de resumen con la función 'plot' como:**
+
+* **anova <- aov(...)**
+* **plot(anova)**
+
+**Interprete brevemente los gráficos obtenidos.**
+
+*Nota: debe ser algo breve, los gráficos muchas veces son complejos y no se espera que entienda la totalidad de todo. Lo de interés de esta pregunta es ver el output de aov y que información interesante puede aportar sobre los datos. No hay una respuesta correcta en esta parte, lo importante son sus comentarios.*
+
+```{python}
+# Solución
+```
+
+**2.4 Puede obtener un resumen de lo obtenido antes con la función 'summary' (nativa de R también) como:**
+
+* **anova <- aov(...)**
+* **summary(anova)**
+
+**Al igual que en el test de chi cuadrado, ANOVA, visto como un test, se basa en una distribución F de Fisher (de hecho, fue Fisher quien propuso este test), que tampoco es simétrica; el estadístico de interés en general se denota F por la Fisher (no explicitaremos su fórmula de cálculo). Sea $X \sim F_{n,k}$ una v.a. con distribución Fisher de $n,k$ grados de libertad, con $n$ la cantidad de lotes y $k$ la cantidad observaciones por cada lote, entonces la hipótesis nula se rechaza si $1-P(X \leq F) = P(X > F) < \alpha$. Al valor $P(X > F)$ se le denota el p-value para ANOVA. En base a esto, ¿se rechaza la hipótesis nula o no para $\alpha=0.05$?**
+
+```{python}
+# Solución
+```
+
+<a style='text-decoration:none;line-height:16px;display:flex;color:#5B5B62;padding:10px;justify-content:end;' href='https://deepnote.com?utm_source=created-in-deepnote-cell&projectId=c6f986ec-9e66-400a-833c-32ff350ef670' target="_blank">
+<img alt='Created in deepnote.com' style='display:inline;max-height:16px;margin:0px;margin-right:7.5px;' src='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDU0LjEgKDc2NDkwKSAtIGh0dHBzOi8vc2tldGNoYXBwLmNvbSAtLT4KICAgIDx0aXRsZT5Hcm91cCAzPC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGcgaWQ9IkxhbmRpbmciIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJBcnRib2FyZCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEyMzUuMDAwMDAwLCAtNzkuMDAwMDAwKSI+CiAgICAgICAgICAgIDxnIGlkPSJHcm91cC0zIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjM1LjAwMDAwMCwgNzkuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICA8cG9seWdvbiBpZD0iUGF0aC0yMCIgZmlsbD0iIzAyNjVCNCIgcG9pbnRzPSIyLjM3NjIzNzYyIDgwIDM4LjA0NzY2NjcgODAgNTcuODIxNzgyMiA3My44MDU3NTkyIDU3LjgyMTc4MjIgMzIuNzU5MjczOSAzOS4xNDAyMjc4IDMxLjY4MzE2ODMiPjwvcG9seWdvbj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0zNS4wMDc3MTgsODAgQzQyLjkwNjIwMDcsNzYuNDU0OTM1OCA0Ny41NjQ5MTY3LDcxLjU0MjI2NzEgNDguOTgzODY2LDY1LjI2MTk5MzkgQzUxLjExMjI4OTksNTUuODQxNTg0MiA0MS42NzcxNzk1LDQ5LjIxMjIyODQgMjUuNjIzOTg0Niw0OS4yMTIyMjg0IEMyNS40ODQ5Mjg5LDQ5LjEyNjg0NDggMjkuODI2MTI5Niw0My4yODM4MjQ4IDM4LjY0NzU4NjksMzEuNjgzMTY4MyBMNzIuODcxMjg3MSwzMi41NTQ0MjUgTDY1LjI4MDk3Myw2Ny42NzYzNDIxIEw1MS4xMTIyODk5LDc3LjM3NjE0NCBMMzUuMDA3NzE4LDgwIFoiIGlkPSJQYXRoLTIyIiBmaWxsPSIjMDAyODY4Ij48L3BhdGg+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwzNy43MzA0NDA1IEwyNy4xMTQ1MzcsMC4yNTcxMTE0MzYgQzYyLjM3MTUxMjMsLTEuOTkwNzE3MDEgODAsMTAuNTAwMzkyNyA4MCwzNy43MzA0NDA1IEM4MCw2NC45NjA0ODgyIDY0Ljc3NjUwMzgsNzkuMDUwMzQxNCAzNC4zMjk1MTEzLDgwIEM0Ny4wNTUzNDg5LDc3LjU2NzA4MDggNTMuNDE4MjY3Nyw3MC4zMTM2MTAzIDUzLjQxODI2NzcsNTguMjM5NTg4NSBDNTMuNDE4MjY3Nyw0MC4xMjg1NTU3IDM2LjMwMzk1NDQsMzcuNzMwNDQwNSAyNS4yMjc0MTcsMzcuNzMwNDQwNSBDMTcuODQzMDU4NiwzNy43MzA0NDA1IDkuNDMzOTE5NjYsMzcuNzMwNDQwNSAwLDM3LjczMDQ0MDUgWiIgaWQ9IlBhdGgtMTkiIGZpbGw9IiMzNzkzRUYiPjwvcGF0aD4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+' > </img>
+Created in <span style='font-weight:600;margin-left:4px;'>Deepnote</span></a>
+
